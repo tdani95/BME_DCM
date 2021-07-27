@@ -19,44 +19,35 @@ upper = NULL
 parallel = TRUE
 reduce = TRUE
 
-levels <- c(3, 3, 3)
-p.mean <- c(0.3, 0.7, 0.3, 0.7, 0.3, 0.7)
-low = c(-Inf, -Inf, -Inf, 0, 0, -Inf)
-up = rep(Inf, length(p.mean))
-p.var <- diag(length(p.mean)) 
+data("example_design", package = "idefix")
+xdes <- example_design
+
+n.sets <- 8
+alternatives <- c("A alternatíva", "B alternatíva")
+attributes <- c("Ár", "Idő", "Zsúfoltság")
+
 code <- c("D", "D", "D")
-cand <- Profiles(lvls = levels, coding = code)
-n.sets <- 12
-# settings of the survey
-alternatives <- c("Alternative A", "Alternative B")
-attributes <- c("Price", "Time", "Comfort")
+
 labels <- vector(mode="list", length(attributes))
-labels[[1]] <- c("$10", "$5", "$1")
-labels[[2]] <- c("20 min", "12 min", "3 min")
-labels[[3]] <- c("bad", "average", "good")
-i.text <- "Welcome, here are some instructions ... good luck!"
-b.text <- "Please choose the alternative you prefer"
-e.text <- "Thanks for taking the survey"
+labels[[1]] <- c("300 Ft", "600 Ft", "900 Ft")
+labels[[2]] <- c("30 perc", "18 perc", "6 perc")
+labels[[3]] <- c("Van ülőhely", "Nincs ülőhely, de állóhely van", "Kevés állóhely van")
+i.text <- "Üdvözlöm! Kérem töltse ki a kérdőívet"
+b.text <- "Kérem jelölje be, hogy melyik alternatívát preferálja"
+e.text <- "Köszönjük, hogy kitöltötte a kérdőívet!"
 dataDir <- getwd()
 # Display the survey 
-des = NULL
+des = xdes
 n.total = n.sets
 alts = alternatives
+
 atts = attributes
 lvl.names = labels
 coding = code
-
 buttons.text = b.text
 intro.text = i.text
 end.text = e.text
-
-prior.mean = p.mean
-prior.covar = p.var
-cand.set = cand
-
-lower = low
-upper = up
-n.draws = 50
+data.dir = NULL
 data.dir = tempdir()
 
 
@@ -75,6 +66,72 @@ choice.sets <- matrix(data = NA, nrow = n.total * n.alts, ncol = n.atts)
 buttons <- NULL
 sn <- 0
 
+# functions
+Rcnames <- function(n.sets, n.alts, alt.cte, no.choice) {
+  # rownames
+  r.s <- rep(1:n.sets, each = n.alts)
+  r.a <- rep(1:n.alts, n.sets)
+  r.names <- paste(paste("set", r.s, sep = ""), paste("alt", r.a, sep = ""), sep = ".")
+  if(no.choice){
+    ncsek <- seq(n.alts, (n.sets * n.alts), n.alts)  
+    r.names[ncsek] <- "no.choice"
+  }
+  # colnames alternative specific constants
+  if(sum(alt.cte) > 0.2){
+    cte.names <- paste(paste("alt", which(alt.cte == 1), sep = ""), ".cte", sep = "") 
+  } else {
+    cte.names <- NULL
+  }
+  # return
+  return(list(r.names, cte.names))
+}
+
+Charbin <- function (resp, alts, n.alts, no.choice = FALSE) {
+  # Error resp not in altsions
+  if (!all(resp %in% alts)) {
+    stop("1 or more responses do not match the possible response options.")
+  }
+  # Error altsions
+  if (length(alts) != (n.alts + no.choice)) {
+    stop("Number of response options is not correct")
+  }
+  map <- match(resp, alts)
+  l <- list()
+  for(i in 1:length(map)){
+    l[[i]] <- rep(0, n.alts)
+    if (no.choice) {
+      l[[i]][map[i] - 1] <- 1
+    } else {
+      l[[i]][map[i]] <- 1
+    }
+  }
+  v <- unlist(l)
+  return(v)
+}
+
+saveData <- function(data, data.dir, n.atts) {
+  # Data manipulation 
+  d <- as.data.frame(cbind(data$desing, resp = data$bin.responses))
+  unc_resp <- rep(data$responses, each = n.atts) 
+  unc_setnr <- rep(1:length(data$responses), each = n.atts)
+  unc_d <- cbind(set = unc_setnr, data$survey, resp = unc_resp) 
+  # Create unique file names
+  numname <- sprintf("%s_num_data.txt", as.integer(Sys.time()))
+  charname <- sprintf("%s_char_data.txt", as.integer(Sys.time()))
+  # Write files to data.dir
+  utils::write.table(
+    x = d,
+    file = file.path(data.dir, numname), 
+    row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
+  )
+  utils::write.table(
+    x = unc_d,
+    file = file.path(data.dir, charname), 
+    row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
+  )
+  drop_upload(file.path(data.dir, charname), path = outputDir)
+  drop_upload(file.path(data.dir, numname), path = outputDir)
+}
 
 if (is.null(des)) {
   n.init <- 0
@@ -296,6 +353,7 @@ server <- function(input, output) {
       # Plot new choice set
       output$choice.set <-  renderTable(Select(), rownames = TRUE)
     }
+   
     # Store responses and design
     if (sn > 1 && sn <= (n.total + 1)) {
       resp  <<- c(resp, input$survey)
@@ -322,7 +380,7 @@ server <- function(input, output) {
   })
   # set nr
   observeEvent(input$OK, {
-    if (sn < n.total) {
+    if (sn <= n.total) {
       output$set.nr <- renderText(paste(c("choice set:", sn, "/", n.total)))
     } else {output$set.nr <- renderText(NULL)}
   })

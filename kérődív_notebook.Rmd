@@ -63,17 +63,19 @@ y.sim
 ```
 
 ```{r }
-levels <- c(3, 3, 3)
-p.mean <- c(0.3, 0.7, 0.3, 0.7, 0.3, 0.7)
-low = c(-Inf, -Inf, -Inf, 0, 0, -Inf) #truncated normal distribution
+levels <- c(3, 3)
+p.mean <- c(0.3, 0.7, 0.3, 0.7)
+low = c(-Inf, -Inf, -Inf, 0) #truncated normal distribution
 up = rep(Inf, length(p.mean))
 p.var <- diag(length(p.mean)) 
-code <- c("D", "D", "D")
+code <- c("D", "D")
 cand <- Profiles(lvls = levels, coding = code)
-n.sets <- 12
+n.sets <- 8
+
 # settings of the survey
 alternatives <- c("A alternatíva", "B alternatíva")
 attributes <- c("Ár", "Idő", "Zsúfoltság")
+attributes <- c("Ár", "Idő")
 labels <- vector(mode="list", length(attributes))
 labels[[1]] <- c("300 Ft", "600 Ft", "900 Ft")
 labels[[2]] <- c("30 perc", "18 perc", "6 perc")
@@ -89,5 +91,28 @@ SurveyApp(des = NULL, n.total = n.sets, alts = alternatives,
           prior.mean = p.mean, prior.covar = p.var, cand.set = cand, 
           lower = low, upper = up, n.draws = 50, data.dir = "./results")
 
+```
+```{r Nem adaptív set}
+data("example_design", package = "idefix")
+xdes <- example_design
+
+alternatives <- c("A alternatíva", "B alternatíva")
+attributes <- c("Ár", "Idő", "Zsúfoltság")
+
+code <- c("D", "D", "D")
+
+labels <- vector(mode="list", length(attributes))
+labels[[1]] <- c("300 Ft", "600 Ft", "900 Ft")
+labels[[2]] <- c("30 perc", "18 perc", "6 perc")
+labels[[3]] <- c("Van ülőhely", "Nincs ülőhely, de állóhely van", "Kevés állóhely van")
+i.text <- "Welcome, here are some instructions ... good luck!"
+b.text <- "Please choose the alternative you prefer"
+e.text <- "Thanks for taking the survey"
+dataDir <- getwd()
+
+ SurveyApp(des = xdes, n.total = n.sets, alts = alternatives, 
+           atts = attributes, lvl.names = labels, coding = code,
+buttons.text = b.text, intro.text = i.text, end.text = e.text,
+data.dir = NULL)
 ```
 

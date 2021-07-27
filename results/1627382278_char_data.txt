@@ -1,0 +1,37 @@
+	set	A alternatíva	B alternatíva	resp
+Ár	1	600 Ft	900 Ft	B alternatíva
+Idõ	1	18 perc	6 perc	B alternatíva
+Zsúfoltság	1	Nincs ülõhely, de állóhely van	Kevés állóhely van	B alternatíva
+Ár	2	900 Ft	600 Ft	A alternatíva
+Idõ	2	18 perc	6 perc	A alternatíva
+Zsúfoltság	2	Nincs ülõhely, de állóhely van	Kevés állóhely van	A alternatíva
+Ár	3	900 Ft	600 Ft	B alternatíva
+Idõ	3	18 perc	6 perc	B alternatíva
+Zsúfoltság	3	Nincs ülõhely, de állóhely van	Kevés állóhely van	B alternatíva
+Ár	4	900 Ft	600 Ft	A alternatíva
+Idõ	4	18 perc	6 perc	A alternatíva
+Zsúfoltság	4	Nincs ülõhely, de állóhely van	Kevés állóhely van	A alternatíva
+Ár	5	900 Ft	600 Ft	B alternatíva
+Idõ	5	18 perc	6 perc	B alternatíva
+Zsúfoltság	5	Nincs ülõhely, de állóhely van	Kevés állóhely van	B alternatíva
+Ár	6	900 Ft	600 Ft	A alternatíva
+Idõ	6	18 perc	6 perc	A alternatíva
+Zsúfoltság	6	Nincs ülõhely, de állóhely van	Kevés állóhely van	A alternatíva
+Ár	7	900 Ft	600 Ft	B alternatíva
+Idõ	7	18 perc	6 perc	B alternatíva
+Zsúfoltság	7	Nincs ülõhely, de állóhely van	Kevés állóhely van	B alternatíva
+Ár	8	900 Ft	600 Ft	A alternatíva
+Idõ	8	18 perc	6 perc	A alternatíva
+Zsúfoltság	8	Nincs ülõhely, de állóhely van	Kevés állóhely van	A alternatíva
+Ár	9	900 Ft	600 Ft	A alternatíva
+Idõ	9	18 perc	6 perc	A alternatíva
+Zsúfoltság	9	Nincs ülõhely, de állóhely van	Kevés állóhely van	A alternatíva
+Ár	10	900 Ft	600 Ft	A alternatíva
+Idõ	10	30 perc	6 perc	A alternatíva
+Zsúfoltság	10	Nincs ülõhely, de állóhely van	Kevés állóhely van	A alternatíva
+Ár	11	900 Ft	300 Ft	B alternatíva
+Idõ	11	18 perc	6 perc	B alternatíva
+Zsúfoltság	11	Nincs ülõhely, de állóhely van	Kevés állóhely van	B alternatíva
+Ár	12	900 Ft	600 Ft	A alternatíva
+Idõ	12	18 perc	6 perc	A alternatíva
+Zsúfoltság	12	Nincs ülõhely, de állóhely van	Kevés állóhely van	A alternatíva

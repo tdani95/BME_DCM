@@ -5,7 +5,7 @@ account: tordaidani
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4424610
-bundleId: 4857200
+bundleId: 4860493
 url: https://tordaidani.shinyapps.io/deploy_test/
-when: 1627312133.10079
-lastSyncTime: 1627312133.10079
+when: 1627395673.32193
+lastSyncTime: 1627395673.32194

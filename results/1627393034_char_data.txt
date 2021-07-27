@@ -1,0 +1,17 @@
+	set	A alternatíva	B alternatíva	resp
+Ár	1	900 Ft	600 Ft	B alternatíva
+Idő	1	18 perc	6 perc	B alternatíva
+Ár	2	900 Ft	600 Ft	A alternatíva
+Idő	2	18 perc	6 perc	A alternatíva
+Ár	3	900 Ft	600 Ft	B alternatíva
+Idő	3	18 perc	6 perc	B alternatíva
+Ár	4	900 Ft	600 Ft	A alternatíva
+Idő	4	18 perc	6 perc	A alternatíva
+Ár	5	900 Ft	600 Ft	B alternatíva
+Idő	5	18 perc	6 perc	B alternatíva
+Ár	6	900 Ft	600 Ft	B alternatíva
+Idő	6	18 perc	6 perc	B alternatíva
+Ár	7	900 Ft	600 Ft	A alternatíva
+Idő	7	18 perc	6 perc	A alternatíva
+Ár	8	900 Ft	600 Ft	B alternatíva
+Idő	8	18 perc	6 perc	B alternatíva

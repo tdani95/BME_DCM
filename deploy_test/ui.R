@@ -14,5 +14,6 @@ fluidPage(
   # Put action button on screen
   column(8, align = "center", actionButton("OK", "OK")),
   # put end text on screen
-  column(8, align = 'center', textOutput('end'))
+  column(8, align = 'center', textOutput('end')),
+  #column(8, align = 'center', numericInput("age", "Életkor:", 10, min = 1, max = 100))
 )

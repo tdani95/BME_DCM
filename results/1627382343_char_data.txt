@@ -1,0 +1,4 @@
+	set	A alternatíva	B alternatíva	resp
+Ár	1	600 Ft	900 Ft	B alternatíva
+Idõ	1	6 perc	18 perc	B alternatíva
+Zsúfoltság	1	Nincs ülõhely, de állóhely van	Kevés állóhely van	B alternatíva
