@@ -1,0 +1,37 @@
+	set	A alternat?va	B alternat?va	resp
+Ár	1	600 Ft	900 Ft	A alternat?va
+IdŐ	1	6 perc	18 perc	A alternat?va
+ZsÚfoltság	1	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	A alternat?va
+?r	2	600 Ft	900 Ft	B alternat?va
+Id?	2	18 perc	6 perc	B alternat?va
+Zs?folts?g	2	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	B alternat?va
+?r	3	600 Ft	900 Ft	A alternat?va
+Id?	3	18 perc	30 perc	A alternat?va
+Zs?folts?g	3	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	A alternat?va
+?r	4	600 Ft	900 Ft	B alternat?va
+Id?	4	18 perc	6 perc	B alternat?va
+Zs?folts?g	4	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	B alternat?va
+?r	5	600 Ft	900 Ft	B alternat?va
+Id?	5	18 perc	30 perc	B alternat?va
+Zs?folts?g	5	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	B alternat?va
+?r	6	600 Ft	900 Ft	A alternat?va
+Id?	6	30 perc	18 perc	A alternat?va
+Zs?folts?g	6	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	A alternat?va
+?r	7	600 Ft	900 Ft	A alternat?va
+Id?	7	18 perc	30 perc	A alternat?va
+Zs?folts?g	7	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	A alternat?va
+?r	8	600 Ft	900 Ft	A alternat?va
+Id?	8	18 perc	30 perc	A alternat?va
+Zs?folts?g	8	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	A alternat?va
+?r	9	600 Ft	900 Ft	B alternat?va
+Id?	9	18 perc	6 perc	B alternat?va
+Zs?folts?g	9	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	B alternat?va
+?r	10	600 Ft	900 Ft	A alternat?va
+Id?	10	18 perc	30 perc	A alternat?va
+Zs?folts?g	10	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	A alternat?va
+?r	11	600 Ft	900 Ft	B alternat?va
+Id?	11	18 perc	6 perc	B alternat?va
+Zs?folts?g	11	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	B alternat?va
+?r	12	600 Ft	900 Ft	B alternat?va
+Id?	12	18 perc	6 perc	B alternat?va
+Zs?folts?g	12	Nincs ?l?hely, de ?ll?hely van	Kev?s ?ll?hely van	B alternat?va
