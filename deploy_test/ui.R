@@ -1,6 +1,6 @@
 library(shiny)
 library(idefix)
-
+library(rdrop2)
 
 fluidPage(
   # Put setnr on screen

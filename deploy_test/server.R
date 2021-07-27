@@ -1,9 +1,14 @@
 library(idefix)
 library(shiny)
+library(rdrop2)
+
+# setting up the dropbox enviroment
+outputDir <- "BME"
+token <- readRDS("droptoken.rds")
+drop_acc(dtoken = token)
 
 alt.cte = NULL
 no.choice = NULL
-data.dir = NULL
 c.lvls = NULL
 prior.mean = NULL
 prior.covar = NULL
@@ -52,7 +57,7 @@ cand.set = cand
 lower = low
 upper = up
 n.draws = 50
-data.dir = "./results"
+data.dir = tempdir()
 
 
 #initialize
