@@ -379,9 +379,14 @@ server <- function(input, output) {
     }
   })
   # set nr
+  observeEvent(input$ok,{
+    if (sn == 1) {
+      input$age <- renderText({ input$age })
+    } else {input$age <- renderText(NULL)}
+  })
   observeEvent(input$OK, {
     if (sn <= n.total) {
-      output$set.nr <- renderText(paste(c("choice set:", sn, "/", n.total)))
+      output$set.nr <- renderText(paste(c("Döntési szituáció", sn, "/", n.total)))
     } else {output$set.nr <- renderText(NULL)}
   })
   # Introtext
