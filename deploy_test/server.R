@@ -48,7 +48,7 @@ buttons.text = b.text
 intro.text = i.text
 end.text = e.text
 data.dir = NULL
-data.dir = tempdir()
+data.dir = './results/'
 
 
 #initialize
@@ -129,10 +129,11 @@ saveData <- function(data, data.dir, n.atts) {
     file = file.path(data.dir, charname), 
     row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
   )
-  drop_upload(file.path(data.dir, charname), path = outputDir)
-  drop_upload(file.path(data.dir, numname), path = outputDir)
 }
 
+  
+  
+  
 if (is.null(des)) {
   n.init <- 0
 } else {
