@@ -1,11 +1,6 @@
 library(idefix)
 library(shiny)
-library(rdrop2)
 
-# setting up the dropbox enviroment
-outputDir <- "BME"
-token <- readRDS("droptoken.rds")
-drop_acc(dtoken = token)
 
 alt.cte = NULL
 no.choice = NULL
@@ -48,7 +43,7 @@ buttons.text = b.text
 intro.text = i.text
 end.text = e.text
 data.dir = NULL
-data.dir = './results/'
+data.dir = './results'
 
 
 #initialize
