@@ -14,10 +14,16 @@ upper = NULL
 parallel = TRUE
 reduce = TRUE
 
-data("example_design", package = "idefix")
-xdes <- example_design
+levels <- c(3, 3, 3)
+p.mean <- c(0.3, 0.7, 0.3, 0.7, 0.3, 0.7)
+low = c(-Inf, -Inf, -Inf, 0, 0, -Inf)
+up = rep(Inf, length(p.mean))
+p.var <- diag(length(p.mean)) 
+code <- c("D", "D", "D")
+cand <- Profiles(lvls = levels, coding = code)
 
-n.sets <- 8
+
+n.sets <- 12
 alternatives <- c("A alternatíva", "B alternatíva")
 attributes <- c("Ár", "Idő", "Zsúfoltság")
 
@@ -32,7 +38,7 @@ b.text <- "Kérem jelölje be, hogy melyik alternatívát preferálja"
 e.text <- "Köszönjük, hogy kitöltötte a kérdőívet!"
 dataDir <- getwd()
 # Display the survey 
-des = xdes
+des = NULL
 n.total = n.sets
 alts = alternatives
 
@@ -44,6 +50,13 @@ intro.text = i.text
 end.text = e.text
 data.dir = NULL
 data.dir = './results'
+
+prior.mean = p.mean
+prior.covar = p.var
+cand.set = cand 
+lower = low
+upper = up
+n.draws = 50
 
 
 #initialize
