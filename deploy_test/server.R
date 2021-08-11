@@ -2,7 +2,11 @@ library(idefix)
 library(shiny)
 
 
-alt.cte = NULL
+
+
+server <- function(input, output) {
+
+  alt.cte = NULL
 no.choice = NULL
 c.lvls = NULL
 prior.mean = NULL
@@ -95,6 +99,7 @@ Rcnames <- function(n.sets, n.alts, alt.cte, no.choice) {
 }
 
 Charbin <- function (resp, alts, n.alts, no.choice = FALSE) {
+
   # Error resp not in altsions
   if (!all(resp %in% alts)) {
     stop("1 or more responses do not match the possible response options.")
@@ -106,10 +111,14 @@ Charbin <- function (resp, alts, n.alts, no.choice = FALSE) {
   map <- match(resp, alts)
   l <- list()
   for(i in 1:length(map)){
+    #print(map)
     l[[i]] <- rep(0, n.alts)
+    #print(l)
     if (no.choice) {
       l[[i]][map[i] - 1] <- 1
     } else {
+      print(map[i])
+      print(l[[i]])
       l[[i]][map[i]] <- 1
     }
   }
@@ -268,11 +277,7 @@ if (!(algorithm %in% c("MOD","CEA"))) {
   stop("algorithm should be 'MOD' or 'CEA'")
 }
 
-server <- function(input, output) {
-  # Count set number
-  observeEvent(input$OK, {
-    sn <<- sn + 1
-  })
+
   # Set selection function
   Select <- function() {
     if (sn <= n.total) {
@@ -379,6 +384,13 @@ server <- function(input, output) {
       output$choice.set <-  renderTable(NULL)
     }
   })
+  # Count set number
+  observeEvent(input$OK, {
+    sn <<- sn + 1
+    #print(sn)
+  })  # Count set number
+  
+  
   #Output response options after first action button click
   output$buttons <- renderUI({
     # radiobuttons
@@ -417,7 +429,7 @@ server <- function(input, output) {
         saveData(data = surveyData, data.dir = data.dir, n.atts = n.atts)
       }
       # Stop application 
-      stopApp()
+      #stopApp()
     }
   })
 }
