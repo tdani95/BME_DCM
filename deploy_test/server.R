@@ -2,7 +2,11 @@ library(idefix)
 library(shiny)
 
 
-alt.cte = NULL
+
+
+server <- function(input, output) {
+
+  alt.cte = NULL
 no.choice = NULL
 c.lvls = NULL
 prior.mean = NULL
@@ -268,7 +272,6 @@ if (!(algorithm %in% c("MOD","CEA"))) {
   stop("algorithm should be 'MOD' or 'CEA'")
 }
 
-server <- function(input, output) {
   # Count set number
   observeEvent(input$OK, {
     sn <<- sn + 1
@@ -417,7 +420,7 @@ server <- function(input, output) {
         saveData(data = surveyData, data.dir = data.dir, n.atts = n.atts)
       }
       # Stop application 
-      stopApp()
+      #stopApp()
     }
   })
 }
