@@ -1,266 +1,265 @@
 library(idefix)
 library(shiny)
-library(rdrop2)
-
-# setting up the dropbox enviroment
-outputDir <- "BME"
-token <- readRDS("droptoken.rds")
-drop_acc(dtoken = token)
-
-alt.cte = NULL
-no.choice = NULL
-c.lvls = NULL
-prior.mean = NULL
-prior.covar = NULL
-cand.set = NULL
-n.draws = NULL
-lower = NULL
-upper = NULL
-parallel = TRUE
-reduce = TRUE
-
-data("example_design", package = "idefix")
-xdes <- example_design
-
-n.sets <- 8
-alternatives <- c("A alternatíva", "B alternatíva")
-attributes <- c("Ár", "Idő", "Zsúfoltság")
-
-code <- c("D", "D", "D")
-
-labels <- vector(mode="list", length(attributes))
-labels[[1]] <- c("300 Ft", "600 Ft", "900 Ft")
-labels[[2]] <- c("30 perc", "18 perc", "6 perc")
-labels[[3]] <- c("Van ülőhely", "Nincs ülőhely, de állóhely van", "Kevés állóhely van")
-i.text <- "Üdvözlöm! Kérem töltse ki a kérdőívet"
-b.text <- "Kérem jelölje be, hogy melyik alternatívát preferálja"
-e.text <- "Köszönjük, hogy kitöltötte a kérdőívet!"
-dataDir <- getwd()
-# Display the survey 
-des = xdes
-n.total = n.sets
-alts = alternatives
-
-atts = attributes
-lvl.names = labels
-coding = code
-buttons.text = b.text
-intro.text = i.text
-end.text = e.text
-data.dir = NULL
-data.dir = './results/'
 
 
-#initialize
 
 
-algorithm = "MOD"
-sdata <- vector(mode = "list")
-surveyData <- vector(mode = "list")
-y.bin <- vector("numeric")
-resp  <- vector("character")
-n.atts <- length(atts)
-n.alts <- length(alts)
-n.levels <- as.vector(unlist(lapply(lvl.names,length)))
-choice.sets <- matrix(data = NA, nrow = n.total * n.alts, ncol = n.atts)
-buttons <- NULL
-sn <- 0
-
-# functions
-Rcnames <- function(n.sets, n.alts, alt.cte, no.choice) {
-  # rownames
-  r.s <- rep(1:n.sets, each = n.alts)
-  r.a <- rep(1:n.alts, n.sets)
-  r.names <- paste(paste("set", r.s, sep = ""), paste("alt", r.a, sep = ""), sep = ".")
-  if(no.choice){
-    ncsek <- seq(n.alts, (n.sets * n.alts), n.alts)  
-    r.names[ncsek] <- "no.choice"
-  }
-  # colnames alternative specific constants
-  if(sum(alt.cte) > 0.2){
-    cte.names <- paste(paste("alt", which(alt.cte == 1), sep = ""), ".cte", sep = "") 
-  } else {
-    cte.names <- NULL
-  }
-  # return
-  return(list(r.names, cte.names))
-}
-
-Charbin <- function (resp, alts, n.alts, no.choice = FALSE) {
-  # Error resp not in altsions
-  if (!all(resp %in% alts)) {
-    stop("1 or more responses do not match the possible response options.")
-  }
-  # Error altsions
-  if (length(alts) != (n.alts + no.choice)) {
-    stop("Number of response options is not correct")
-  }
-  map <- match(resp, alts)
-  l <- list()
-  for(i in 1:length(map)){
-    l[[i]] <- rep(0, n.alts)
-    if (no.choice) {
-      l[[i]][map[i] - 1] <- 1
-    } else {
-      l[[i]][map[i]] <- 1
-    }
-  }
-  v <- unlist(l)
-  return(v)
-}
-
-saveData <- function(data, data.dir, n.atts) {
-  # Data manipulation 
-  d <- as.data.frame(cbind(data$desing, resp = data$bin.responses))
-  unc_resp <- rep(data$responses, each = n.atts) 
-  unc_setnr <- rep(1:length(data$responses), each = n.atts)
-  unc_d <- cbind(set = unc_setnr, data$survey, resp = unc_resp) 
-  # Create unique file names
-  numname <- sprintf("%s_num_data.txt", as.integer(Sys.time()))
-  charname <- sprintf("%s_char_data.txt", as.integer(Sys.time()))
-  # Write files to data.dir
-  utils::write.table(
-    x = d,
-    file = file.path(data.dir, numname), 
-    row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
-  )
-  utils::write.table(
-    x = unc_d,
-    file = file.path(data.dir, charname), 
-    row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
-  )
-}
-
-  
-  
-  
-if (is.null(des)) {
-  n.init <- 0
-} else {
-  n.init <- nrow(des) / n.alts
-  if (!isTRUE(all.equal(n.init, as.integer(n.init)))) {
-    stop("the number of rows of 'des' are not a multiple of length(alts)")
-  }
-}
-if (is.null(alt.cte) || all(alt.cte == 0)) {
-  alt.cte <- rep(0, n.alts)
-  n.cte <- 0
-  cte.des <- NULL
-} else {
-  # Error 
-  if (length(alt.cte) != n.alts) {
-    stop("length(alts) does not match length(alt.cte)")
-  }
-  if (!all(alt.cte %in% c(0, 1))) {
-    stop("'alt.cte' should only contain 0's or 1's.")
-  }
-  if (!any(alt.cte == 0)) {
-    stop("'alt.cte' should at least contain 1 zero")
-  }
-  n.cte <- sum(alt.cte)
-  if (!is.null(des)) {
-    cte.des <- Altspec(alt.cte = alt.cte, n.sets = n.init)
-    if (!isTRUE(all.equal(cte.des, matrix(des[ , 1:n.cte], ncol = n.cte)))) {
-      stop("the first column(s) of 'des' are different from what is expected based on 'alt.cte'")
-    }
-  }
-}
-# Error handling
-if (!is.null(no.choice)) {
-  if (!is.numeric(no.choice)) {
-    stop("'no.choice' should be an integer indicating the no choice alternative.")
-  }
-  if (!no.choice %% 1 == 0) {
-    stop("'no.choice' should be an integer")
-  }
-  if (any(isTRUE(no.choice > (n.alts + 0.2)), isTRUE(no.choice < 0.2))) {
-    stop("'no.choice' does not indicate one of the alternatives")
-  }
-  if (!isTRUE(all.equal(alt.cte[no.choice], 1))) {
-    stop("the location of the 'no.choice' option in the 'alt.cte' vector should correspond with 1")
-  }
-}
-if (!is.null(data.dir)) {
-  if (!dir.exists(data.dir)) {
-    stop("Directory 'data.dir' does not exist")
-  }
-}
-if (n.total > n.init) {
-  if (is.null(lower)) {
-    lower <- rep(-Inf, length(prior.mean))
-  }
-  if (is.null(upper)) {
-    upper <- rep(Inf, length(prior.mean))
-  }
-  if (!any(c(isTRUE(all.equal(length(prior.mean), length(lower))), isTRUE(all.equal(length(prior.mean), length(upper)))))) {
-    stop("length 'prior.mean' should equal 'upper' and 'lower'")
-  }
-  if (algorithm == "MOD") {
-    if (any(c(is.null(prior.mean), is.null(prior.covar), is.null(cand.set), 
-              is.null(n.draws)))) {
-      stop("When n.total is larger than the number of sets in argument des, arguments prior.mean, prior.covar, cand.set and n.draws should be specified.")
-    }
-    if (length(prior.mean) != ncol(cand.set) + sum(alt.cte)) {
-      stop("Number of parameters in prior.mean does not match with cand.set + alt.cte")
-    }
-  } else if (algorithm == "CEA") {
-    if (any(c(is.null(prior.mean), is.null(prior.covar), is.null(n.draws)))) {
-      stop("When n.total is larger than the number of sets in argument des, arguments prior.mean, prior.covar and n.draws should be specified.")
-    }
-  }
-  
-  if (!isTRUE(all.equal(length(prior.mean), ncol(prior.covar)))) {
-    stop("length of 'prior.mean' differs from number of columns 'prior.covar'")
-  }
-} else {
-  if (!is.null(prior.mean)) {
-    warning("'prior.mean' will be ignored, since there are no adaptive sets.")
-  } 
-  if (!is.null(prior.covar)) {
-    warning("'prior.covar' will be ignored, since there are no adaptive sets.")
-  }
-  if (algorithm == "MOD" & !is.null(cand.set)) {
-    warning("'cand.set' will be ignored, since there are no adaptive sets.")
-  }
-  if (!is.null(lower) || !is.null(upper)) {
-    warning("'lower' and 'upper' bound will be ignored, since there are no adaptive sets.")
-  }
-  if (!is.null(n.draws)) {
-    warning("'n.draws' will be ignored, since there are no adaptive sets.")
-  }
-}
-if (is.null(des)) {
-  if (algorithm == "MOD") {
-    fulldes <- matrix(data = NA, nrow = (n.alts * n.total), ncol = ncol(cand.set))
-  } else {
-    fulldes <- matrix()
-  }
-} else {
-  bs <- seq(1, (nrow(des) - n.alts + 1), n.alts)
-  es <- c((bs - 1), nrow(des))[-1] 
-  rowcol <- Rcnames(n.sets = n.init, n.alts = n.alts, alt.cte = alt.cte, 
-                    no.choice = FALSE)
-  rownames(des) <- rowcol[[1]]
-  if (is.null(colnames(des))) {
-    colnames(des) <- c(rowcol[[2]], paste("par", 1:(ncol(des) - n.cte), 
-                                          sep = "."))
-  }
-  fulldes <- des
-  # Error handling
-  if (length(bs) != n.init) {
-    stop("The number of rows in 'des' is not a multiple of length(atts)")
-  }
-  if ("no.choice.cte" %in% colnames(des)) {
-    if (is.null(no.choice)) {
-      warning("no.choice.cte column name detected in 'des' while 'no.choice = NULL'")
-    }
-  }
-}
-if (!(algorithm %in% c("MOD","CEA"))) {
-  stop("algorithm should be 'MOD' or 'CEA'")
-}
 
 server <- function(input, output) {
+  
+  alt.cte = NULL
+  no.choice = NULL
+  c.lvls = NULL
+  prior.mean = NULL
+  prior.covar = NULL
+  cand.set = NULL
+  n.draws = NULL
+  lower = NULL
+  upper = NULL
+  parallel = TRUE
+  reduce = TRUE
+  
+  data("example_design", package = "idefix")
+  xdes <- example_design
+  
+  n.sets <- 8
+  alternatives <- c("A alternatíva", "B alternatíva")
+  attributes <- c("Ár", "Idő", "Zsúfoltság")
+  
+  code <- c("D", "D", "D")
+  
+  labels <- vector(mode="list", length(attributes))
+  labels[[1]] <- c("300 Ft", "600 Ft", "900 Ft")
+  labels[[2]] <- c("30 perc", "18 perc", "6 perc")
+  labels[[3]] <- c("Van ülőhely", "Nincs ülőhely, de állóhely van", "Kevés állóhely van")
+  i.text <- "Üdvözlöm! Kérem töltse ki a kérdőívet"
+  b.text <- "Kérem jelölje be, hogy melyik alternatívát preferálja"
+  e.text <- "Köszönjük, hogy kitöltötte a kérdőívet!"
+  dataDir <- getwd()
+  # Display the survey 
+  des = xdes
+  n.total = n.sets
+  alts = alternatives
+  
+  atts = attributes
+  lvl.names = labels
+  coding = code
+  buttons.text = b.text
+  intro.text = i.text
+  end.text = e.text
+  data.dir = NULL
+  data.dir = './results/'
+  
+  
+  #initialize
+  
+  
+  algorithm = "MOD"
+  sdata <- vector(mode = "list")
+  surveyData <- vector(mode = "list")
+  y.bin <- vector("numeric")
+  resp  <- vector("character")
+  n.atts <- length(atts)
+  n.alts <- length(alts)
+  n.levels <- as.vector(unlist(lapply(lvl.names,length)))
+  choice.sets <- matrix(data = NA, nrow = n.total * n.alts, ncol = n.atts)
+  buttons <- NULL
+  sn <- 0
+  
+  # functions
+  Rcnames <- function(n.sets, n.alts, alt.cte, no.choice) {
+    # rownames
+    r.s <- rep(1:n.sets, each = n.alts)
+    r.a <- rep(1:n.alts, n.sets)
+    r.names <- paste(paste("set", r.s, sep = ""), paste("alt", r.a, sep = ""), sep = ".")
+    if(no.choice){
+      ncsek <- seq(n.alts, (n.sets * n.alts), n.alts)  
+      r.names[ncsek] <- "no.choice"
+    }
+    # colnames alternative specific constants
+    if(sum(alt.cte) > 0.2){
+      cte.names <- paste(paste("alt", which(alt.cte == 1), sep = ""), ".cte", sep = "") 
+    } else {
+      cte.names <- NULL
+    }
+    # return
+    return(list(r.names, cte.names))
+  }
+  
+  Charbin <- function (resp, alts, n.alts, no.choice = FALSE) {
+    # Error resp not in altsions
+    if (!all(resp %in% alts)) {
+      stop("1 or more responses do not match the possible response options.")
+    }
+    # Error altsions
+    if (length(alts) != (n.alts + no.choice)) {
+      stop("Number of response options is not correct")
+    }
+    map <- match(resp, alts)
+    l <- list()
+    for(i in 1:length(map)){
+      l[[i]] <- rep(0, n.alts)
+      if (no.choice) {
+        l[[i]][map[i] - 1] <- 1
+      } else {
+        l[[i]][map[i]] <- 1
+      }
+    }
+    v <- unlist(l)
+    return(v)
+  }
+  
+  saveData <- function(data, data.dir, n.atts) {
+    # Data manipulation 
+    d <- as.data.frame(cbind(data$desing, resp = data$bin.responses))
+    unc_resp <- rep(data$responses, each = n.atts) 
+    unc_setnr <- rep(1:length(data$responses), each = n.atts)
+    unc_d <- cbind(set = unc_setnr, data$survey, resp = unc_resp) 
+    # Create unique file names
+    numname <- sprintf("%s_num_data.txt", as.integer(Sys.time()))
+    charname <- sprintf("%s_char_data.txt", as.integer(Sys.time()))
+    # Write files to data.dir
+    utils::write.table(
+      x = d,
+      file = file.path(data.dir, numname), 
+      row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
+    )
+    utils::write.table(
+      x = unc_d,
+      file = file.path(data.dir, charname), 
+      row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
+    )
+  }
+  
+  
+  
+  
+  if (is.null(des)) {
+    n.init <- 0
+  } else {
+    n.init <- nrow(des) / n.alts
+    if (!isTRUE(all.equal(n.init, as.integer(n.init)))) {
+      stop("the number of rows of 'des' are not a multiple of length(alts)")
+    }
+  }
+  if (is.null(alt.cte) || all(alt.cte == 0)) {
+    alt.cte <- rep(0, n.alts)
+    n.cte <- 0
+    cte.des <- NULL
+  } else {
+    # Error 
+    if (length(alt.cte) != n.alts) {
+      stop("length(alts) does not match length(alt.cte)")
+    }
+    if (!all(alt.cte %in% c(0, 1))) {
+      stop("'alt.cte' should only contain 0's or 1's.")
+    }
+    if (!any(alt.cte == 0)) {
+      stop("'alt.cte' should at least contain 1 zero")
+    }
+    n.cte <- sum(alt.cte)
+    if (!is.null(des)) {
+      cte.des <- Altspec(alt.cte = alt.cte, n.sets = n.init)
+      if (!isTRUE(all.equal(cte.des, matrix(des[ , 1:n.cte], ncol = n.cte)))) {
+        stop("the first column(s) of 'des' are different from what is expected based on 'alt.cte'")
+      }
+    }
+  }
+  # Error handling
+  if (!is.null(no.choice)) {
+    if (!is.numeric(no.choice)) {
+      stop("'no.choice' should be an integer indicating the no choice alternative.")
+    }
+    if (!no.choice %% 1 == 0) {
+      stop("'no.choice' should be an integer")
+    }
+    if (any(isTRUE(no.choice > (n.alts + 0.2)), isTRUE(no.choice < 0.2))) {
+      stop("'no.choice' does not indicate one of the alternatives")
+    }
+    if (!isTRUE(all.equal(alt.cte[no.choice], 1))) {
+      stop("the location of the 'no.choice' option in the 'alt.cte' vector should correspond with 1")
+    }
+  }
+  if (!is.null(data.dir)) {
+    if (!dir.exists(data.dir)) {
+      stop("Directory 'data.dir' does not exist")
+    }
+  }
+  if (n.total > n.init) {
+    if (is.null(lower)) {
+      lower <- rep(-Inf, length(prior.mean))
+    }
+    if (is.null(upper)) {
+      upper <- rep(Inf, length(prior.mean))
+    }
+    if (!any(c(isTRUE(all.equal(length(prior.mean), length(lower))), isTRUE(all.equal(length(prior.mean), length(upper)))))) {
+      stop("length 'prior.mean' should equal 'upper' and 'lower'")
+    }
+    if (algorithm == "MOD") {
+      if (any(c(is.null(prior.mean), is.null(prior.covar), is.null(cand.set), 
+                is.null(n.draws)))) {
+        stop("When n.total is larger than the number of sets in argument des, arguments prior.mean, prior.covar, cand.set and n.draws should be specified.")
+      }
+      if (length(prior.mean) != ncol(cand.set) + sum(alt.cte)) {
+        stop("Number of parameters in prior.mean does not match with cand.set + alt.cte")
+      }
+    } else if (algorithm == "CEA") {
+      if (any(c(is.null(prior.mean), is.null(prior.covar), is.null(n.draws)))) {
+        stop("When n.total is larger than the number of sets in argument des, arguments prior.mean, prior.covar and n.draws should be specified.")
+      }
+    }
+    
+    if (!isTRUE(all.equal(length(prior.mean), ncol(prior.covar)))) {
+      stop("length of 'prior.mean' differs from number of columns 'prior.covar'")
+    }
+  } else {
+    if (!is.null(prior.mean)) {
+      warning("'prior.mean' will be ignored, since there are no adaptive sets.")
+    } 
+    if (!is.null(prior.covar)) {
+      warning("'prior.covar' will be ignored, since there are no adaptive sets.")
+    }
+    if (algorithm == "MOD" & !is.null(cand.set)) {
+      warning("'cand.set' will be ignored, since there are no adaptive sets.")
+    }
+    if (!is.null(lower) || !is.null(upper)) {
+      warning("'lower' and 'upper' bound will be ignored, since there are no adaptive sets.")
+    }
+    if (!is.null(n.draws)) {
+      warning("'n.draws' will be ignored, since there are no adaptive sets.")
+    }
+  }
+  if (is.null(des)) {
+    if (algorithm == "MOD") {
+      fulldes <- matrix(data = NA, nrow = (n.alts * n.total), ncol = ncol(cand.set))
+    } else {
+      fulldes <- matrix()
+    }
+  } else {
+    bs <- seq(1, (nrow(des) - n.alts + 1), n.alts)
+    es <- c((bs - 1), nrow(des))[-1] 
+    rowcol <- Rcnames(n.sets = n.init, n.alts = n.alts, alt.cte = alt.cte, 
+                      no.choice = FALSE)
+    rownames(des) <- rowcol[[1]]
+    if (is.null(colnames(des))) {
+      colnames(des) <- c(rowcol[[2]], paste("par", 1:(ncol(des) - n.cte), 
+                                            sep = "."))
+    }
+    fulldes <- des
+    # Error handling
+    if (length(bs) != n.init) {
+      stop("The number of rows in 'des' is not a multiple of length(atts)")
+    }
+    if ("no.choice.cte" %in% colnames(des)) {
+      if (is.null(no.choice)) {
+        warning("no.choice.cte column name detected in 'des' while 'no.choice = NULL'")
+      }
+    }
+  }
+  if (!(algorithm %in% c("MOD","CEA"))) {
+    stop("algorithm should be 'MOD' or 'CEA'")
+  }
+  
   # Count set number
   observeEvent(input$OK, {
     sn <<- sn + 1
@@ -409,7 +408,7 @@ server <- function(input, output) {
         saveData(data = surveyData, data.dir = data.dir, n.atts = n.atts)
       }
       # Stop application 
-      stopApp()
+      #stopApp()
     }
   })
 }

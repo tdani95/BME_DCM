@@ -1,0 +1,22 @@
+diff a/deploy_test/server.R b/deploy_test/server.R	(rejected hunks)
+@@ -1,11 +1,6 @@
+ library(idefix)
+ library(shiny)
+-library(rdrop2)
+ 
+-# setting up the dropbox enviroment
+-outputDir <- "BME"
+-token <- readRDS("droptoken.rds")
+-drop_acc(dtoken = token)
+ 
+ alt.cte = NULL
+ no.choice = NULL
+@@ -48,7 +43,7 @@
+ intro.text = i.text
+ end.text = e.text
+ data.dir = NULL
+-data.dir = './results/'
++data.dir = './results'
+ 
+ 
+ #initialize
