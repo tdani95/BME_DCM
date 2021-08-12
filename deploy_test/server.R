@@ -277,7 +277,10 @@ if (!(algorithm %in% c("MOD","CEA"))) {
   stop("algorithm should be 'MOD' or 'CEA'")
 }
 
-
+  # Count set number
+  observeEvent(input$OK, {
+    sn <<- sn + 1
+  })
   # Set selection function
   Select <- function() {
     if (sn <= n.total) {
