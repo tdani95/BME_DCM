@@ -40,8 +40,8 @@ Charbin <- function (resp, alts, n.alts, no.choice = FALSE) {
     if (no.choice) {
       l[[i]][map[i] - 1] <- 1
     } else {
-      print(map[i])
-      print(l[[i]])
+      #print(map[i])
+      #print(l[[i]])
       l[[i]][map[i]] <- 1
     }
   }
@@ -388,6 +388,8 @@ observeEvent(input$OK, {
   #print(sn)
 })  # Count set number
 
+#test text input
+output$value <- renderText({ input$caption })
 
 #Output response options after first action button click
 output$buttons <- renderUI({
@@ -398,21 +400,36 @@ output$buttons <- renderUI({
   }
 })
 # set nr
-observeEvent(input$ok,{
-  if (sn == 1) {
-    input$age <- renderText({ input$age })
-  } else {input$age <- renderText(NULL)}
-})
+
 observeEvent(input$OK, {
+  #print(input$OK)
   if (sn <= n.total) {
     output$set.nr <- renderText(paste(c("Döntési szituáció", sn, "/", n.total)))
   } else {output$set.nr <- renderText(NULL)}
 })
+
 # Introtext
 output$intro <- renderText(intro.text)
 observeEvent(input$OK, {
   output$intro <- renderText(NULL)
 })
+
+# socio data storage
+observeEvent(input$OK, {
+  if (input$OK == 1){
+    #print(input$city)
+    #print(input$age)
+    #print(input$schooling)
+    
+    df <- data.frame (first_column  = c("Város", "Életkor", "Iskolázottság"),
+                      second_column = c(input$city, input$age, input$schooling)
+    )
+    
+    socf_name <- sprintf("%s_socio_data.csv", as.integer(Sys.time()))
+    write.table(df, file = file.path(data.dir, socf_name), sep = ";", row.names = FALSE, col.names = FALSE)
+  }
+})
+
 # End of survey
 observeEvent(input$OK, {
   # Display end text 
