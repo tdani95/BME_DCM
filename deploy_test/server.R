@@ -1,12 +1,80 @@
 library(idefix)
 library(shiny)
 
+# functions
+Rcnames <- function(n.sets, n.alts, alt.cte, no.choice) {
+  # rownames
+  r.s <- rep(1:n.sets, each = n.alts)
+  r.a <- rep(1:n.alts, n.sets)
+  r.names <- paste(paste("set", r.s, sep = ""), paste("alt", r.a, sep = ""), sep = ".")
+  if(no.choice){
+    ncsek <- seq(n.alts, (n.sets * n.alts), n.alts)  
+    r.names[ncsek] <- "no.choice"
+  }
+  # colnames alternative specific constants
+  if(sum(alt.cte) > 0.2){
+    cte.names <- paste(paste("alt", which(alt.cte == 1), sep = ""), ".cte", sep = "") 
+  } else {
+    cte.names <- NULL
+  }
+  # return
+  return(list(r.names, cte.names))
+}
 
+Charbin <- function (resp, alts, n.alts, no.choice = FALSE) {
+  
+  # Error resp not in altsions
+  if (!all(resp %in% alts)) {
+    stop("1 or more responses do not match the possible response options.")
+  }
+  # Error altsions
+  if (length(alts) != (n.alts + no.choice)) {
+    stop("Number of response options is not correct")
+  }
+  map <- match(resp, alts)
+  l <- list()
+  for(i in 1:length(map)){
+    #print(map)
+    l[[i]] <- rep(0, n.alts)
+    #print(l)
+    if (no.choice) {
+      l[[i]][map[i] - 1] <- 1
+    } else {
+      print(map[i])
+      print(l[[i]])
+      l[[i]][map[i]] <- 1
+    }
+  }
+  v <- unlist(l)
+  return(v)
+}
+
+saveData <- function(data, data.dir, n.atts) {
+  # Data manipulation 
+  d <- as.data.frame(cbind(data$desing, resp = data$bin.responses))
+  unc_resp <- rep(data$responses, each = n.atts) 
+  unc_setnr <- rep(1:length(data$responses), each = n.atts)
+  unc_d <- cbind(set = unc_setnr, data$survey, resp = unc_resp) 
+  # Create unique file names
+  numname <- sprintf("%s_num_data.txt", as.integer(Sys.time()))
+  charname <- sprintf("%s_char_data.txt", as.integer(Sys.time()))
+  # Write files to data.dir
+  utils::write.table(
+    x = d,
+    file = file.path(data.dir, numname), 
+    row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
+  )
+  utils::write.table(
+    x = unc_d,
+    file = file.path(data.dir, charname), 
+    row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
+  )
+}
 
 
 server <- function(input, output) {
 
-  alt.cte = NULL
+alt.cte = NULL
 no.choice = NULL
 c.lvls = NULL
 prior.mean = NULL
@@ -78,79 +146,6 @@ choice.sets <- matrix(data = NA, nrow = n.total * n.alts, ncol = n.atts)
 buttons <- NULL
 sn <- 0
 
-# functions
-Rcnames <- function(n.sets, n.alts, alt.cte, no.choice) {
-  # rownames
-  r.s <- rep(1:n.sets, each = n.alts)
-  r.a <- rep(1:n.alts, n.sets)
-  r.names <- paste(paste("set", r.s, sep = ""), paste("alt", r.a, sep = ""), sep = ".")
-  if(no.choice){
-    ncsek <- seq(n.alts, (n.sets * n.alts), n.alts)  
-    r.names[ncsek] <- "no.choice"
-  }
-  # colnames alternative specific constants
-  if(sum(alt.cte) > 0.2){
-    cte.names <- paste(paste("alt", which(alt.cte == 1), sep = ""), ".cte", sep = "") 
-  } else {
-    cte.names <- NULL
-  }
-  # return
-  return(list(r.names, cte.names))
-}
-
-Charbin <- function (resp, alts, n.alts, no.choice = FALSE) {
-
-  # Error resp not in altsions
-  if (!all(resp %in% alts)) {
-    stop("1 or more responses do not match the possible response options.")
-  }
-  # Error altsions
-  if (length(alts) != (n.alts + no.choice)) {
-    stop("Number of response options is not correct")
-  }
-  map <- match(resp, alts)
-  l <- list()
-  for(i in 1:length(map)){
-    #print(map)
-    l[[i]] <- rep(0, n.alts)
-    #print(l)
-    if (no.choice) {
-      l[[i]][map[i] - 1] <- 1
-    } else {
-      print(map[i])
-      print(l[[i]])
-      l[[i]][map[i]] <- 1
-    }
-  }
-  v <- unlist(l)
-  return(v)
-}
-
-saveData <- function(data, data.dir, n.atts) {
-  # Data manipulation 
-  d <- as.data.frame(cbind(data$desing, resp = data$bin.responses))
-  unc_resp <- rep(data$responses, each = n.atts) 
-  unc_setnr <- rep(1:length(data$responses), each = n.atts)
-  unc_d <- cbind(set = unc_setnr, data$survey, resp = unc_resp) 
-  # Create unique file names
-  numname <- sprintf("%s_num_data.txt", as.integer(Sys.time()))
-  charname <- sprintf("%s_char_data.txt", as.integer(Sys.time()))
-  # Write files to data.dir
-  utils::write.table(
-    x = d,
-    file = file.path(data.dir, numname), 
-    row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
-  )
-  utils::write.table(
-    x = unc_d,
-    file = file.path(data.dir, charname), 
-    row.names = TRUE, quote = FALSE, sep = "\t", col.names = NA
-  )
-}
-
-  
-  
-  
 if (is.null(des)) {
   n.init <- 0
 } else {
@@ -277,165 +272,168 @@ if (!(algorithm %in% c("MOD","CEA"))) {
   stop("algorithm should be 'MOD' or 'CEA'")
 }
 
-  # Count set number
-  observeEvent(input$OK, {
-    sn <<- sn + 1
-  })
-  # Set selection function
-  Select <- function() {
-    if (sn <= n.total) {
-      # for initial sets 
-      if (sn <= n.init) {
-        set <- des[bs[sn]:es[sn], ]
-      } else {
-        ## sample drawing for adaptive sets
-        # if First set
-        if (sn == 1) {
-          # sample draws from prior
-          s <- tmvtnorm::rtmvnorm(n = n.draws, mean = prior.mean, 
-                                  sigma = prior.covar, lower = lower, 
-                                  upper = upper)
-          w <- rep(1, nrow(s)) / nrow(s)
-          if (sum(alt.cte) > 0.2) {
-            s <- list(as.matrix(s[ , 1:sum(alt.cte)], ncol = sum(alt.cte)), 
-                      s[ , -c(1:sum(alt.cte))])
-          }
-          # From second set
-        } else {
-          # Sample draws from updated posterior
-          sam <- ImpsampMNL(n.draws = n.draws, prior.mean = prior.mean, 
-                            prior.covar = prior.covar,
-                            des = fulldes, n.alts = n.alts, y = y.bin, 
-                            alt.cte = alt.cte, lower = lower, upper = upper)
-          s <- sam$sample
-          w <- sam$weights
-        }
-        ## Selecting set
-        if (algorithm == "MOD") {
-          # Select new set based on Modfed
-          setobj <- SeqMOD(des = des, cand.set = cand.set, n.alts = n.alts, 
-                           par.draws = s, prior.covar = prior.covar, 
-                           alt.cte = alt.cte, weights = w, 
-                           no.choice = no.choice, parallel = parallel, 
-                           reduce = reduce)
-        } else if (algorithm == "CEA") {
-          setobj <- SeqCEA(des = des, lvls = n.levels, coding = coding,
-                           n.alts = n.alts, par.draws = s, 
-                           prior.covar = prior.covar, alt.cte = alt.cte,
-                           weights = w, no.choice = no.choice, 
-                           parallel = parallel, reduce = reduce)
-        }
-        set <- setobj$set
-        db  <- setobj$db
-        
-        ## Design storage
-        if (sn == 1) {
-          rowcol <- Rcnames(n.sets = 1, n.alts = n.alts, alt.cte = alt.cte, no.choice = FALSE)
-          rownames(set) <- rownames(set, do.NULL = FALSE, prefix = paste(paste("set", sn , sep = ""), "alt", sep = "."))
-          colnames(set) <- c(rowcol[[2]], paste("par", 1:(ncol(set) - n.cte), sep = "."))
-          fulldes <<- set
-        } else {
-          rowcol <- Rcnames(n.sets = 1, n.alts = n.alts, alt.cte = alt.cte, no.choice = FALSE)
-          rownames(set) <- rownames(set, do.NULL = FALSE, prefix = paste(paste("set", sn , sep = ""), "alt", sep = "."))
-          colnames(set) <- c(rowcol[[2]], paste("par", 1:(ncol(set) - n.cte), sep = "."))
-          fulldes <<- rbind(fulldes, set)
-        }
-      }
-      # Transform coded set to attribute level character set.
-      choice.set <- Decode(des = set, n.alts = n.alts, lvl.names = lvl.names, coding = coding, 
-                           alt.cte = alt.cte, c.lvls = c.lvls, no.choice = no.choice)[[1]]
-      choice.set <- t(choice.set[ , 1:n.atts])
-      # Fill in attribute names and alternatives names
-      colnames(choice.set) <- alts
-      rownames(choice.set) <- atts
-      # Store uncoded choice set
+# Count set number
+observeEvent(input$OK, {
+  sn <<- sn + 1
+})
+# Set selection function
+Select <- function() {
+  if (sn <= n.total) {
+    # for initial sets 
+    if (sn <= n.init) {
+      set <- des[bs[sn]:es[sn], ]
+    } else {
+      ## sample drawing for adaptive sets
+      # if First set
       if (sn == 1) {
-        choice.sets <<- choice.set
+        # sample draws from prior
+        s <- tmvtnorm::rtmvnorm(n = n.draws, mean = prior.mean, 
+                                sigma = prior.covar, lower = lower, 
+                                upper = upper)
+        w <- rep(1, nrow(s)) / nrow(s)
+        if (sum(alt.cte) > 0.2) {
+          s <- list(as.matrix(s[ , 1:sum(alt.cte)], ncol = sum(alt.cte)), 
+                    s[ , -c(1:sum(alt.cte))])
+        }
+        # From second set
       } else {
-        choice.sets <<- rbind(choice.sets, choice.set)
+        # Sample draws from updated posterior
+        sam <- ImpsampMNL(n.draws = n.draws, prior.mean = prior.mean, 
+                          prior.covar = prior.covar,
+                          des = fulldes, n.alts = n.alts, y = y.bin, 
+                          alt.cte = alt.cte, lower = lower, upper = upper)
+        s <- sam$sample
+        w <- sam$weights
       }
-      #return design 
-      if (!is.null(no.choice)) {
-        no.choice.set <- choice.set[ ,-no.choice]
-        return(no.choice.set)
+      ## Selecting set
+      if (algorithm == "MOD") {
+        # Select new set based on Modfed
+        setobj <- SeqMOD(des = des, cand.set = cand.set, n.alts = n.alts, 
+                         par.draws = s, prior.covar = prior.covar, 
+                         alt.cte = alt.cte, weights = w, 
+                         no.choice = no.choice, parallel = parallel, 
+                         reduce = reduce)
+      } else if (algorithm == "CEA") {
+        setobj <- SeqCEA(des = des, lvls = n.levels, coding = coding,
+                         n.alts = n.alts, par.draws = s, 
+                         prior.covar = prior.covar, alt.cte = alt.cte,
+                         weights = w, no.choice = no.choice, 
+                         parallel = parallel, reduce = reduce)
+      }
+      set <- setobj$set
+      db  <- setobj$db
+      
+      ## Design storage
+      if (sn == 1) {
+        rowcol <- Rcnames(n.sets = 1, n.alts = n.alts, alt.cte = alt.cte, no.choice = FALSE)
+        rownames(set) <- rownames(set, do.NULL = FALSE, prefix = paste(paste("set", sn , sep = ""), "alt", sep = "."))
+        colnames(set) <- c(rowcol[[2]], paste("par", 1:(ncol(set) - n.cte), sep = "."))
+        fulldes <<- set
       } else {
-        return(choice.set)
+        rowcol <- Rcnames(n.sets = 1, n.alts = n.alts, alt.cte = alt.cte, no.choice = FALSE)
+        rownames(set) <- rownames(set, do.NULL = FALSE, prefix = paste(paste("set", sn , sep = ""), "alt", sep = "."))
+        colnames(set) <- c(rowcol[[2]], paste("par", 1:(ncol(set) - n.cte), sep = "."))
+        fulldes <<- rbind(fulldes, set)
       }
+    }
+    # Transform coded set to attribute level character set.
+    choice.set <- Decode(des = set, n.alts = n.alts, lvl.names = lvl.names, coding = coding, 
+                         alt.cte = alt.cte, c.lvls = c.lvls, no.choice = no.choice)[[1]]
+    choice.set <- t(choice.set[ , 1:n.atts])
+    # Fill in attribute names and alternatives names
+    colnames(choice.set) <- alts
+    rownames(choice.set) <- atts
+    # Store uncoded choice set
+    if (sn == 1) {
+      choice.sets <<- choice.set
+    } else {
+      choice.sets <<- rbind(choice.sets, choice.set)
+    }
+    #return design 
+    if (!is.null(no.choice)) {
+      no.choice.set <- choice.set[ ,-no.choice]
+      return(no.choice.set)
+    } else {
+      return(choice.set)
     }
   }
-  #When action button is clicked
-  observeEvent(input$OK, {
-    # survey phase 
-    if (sn <= n.total ) {
-      # Plot new choice set
-      output$choice.set <-  renderTable(Select(), rownames = TRUE)
-    }
-   
-    # Store responses and design
-    if (sn > 1 && sn <= (n.total + 1)) {
-      resp  <<- c(resp, input$survey)
-      y.bin <<- Charbin(resp = resp, alts = alts, n.alts = n.alts)
-      sdata[["bin.responses"]] <- y.bin
-      sdata[["responses"]] <- resp
-      sdata[["desing"]] <- fulldes
-      sdata[["survey"]] <- choice.sets
-      surveyData <<- sdata 
-    } 
-    # end phase 
-    if (sn > n.total) {
-      #Don't show choice set
-      output$choice.set <-  renderTable(NULL)
-    }
-  })
-  # Count set number
-  observeEvent(input$OK, {
-    sn <<- sn + 1
-    #print(sn)
-  })  # Count set number
-  
-  
-  #Output response options after first action button click
-  output$buttons <- renderUI({
-    # radiobuttons
-    if (input$OK > 0 && input$OK <= n.total) {
-      return(list(radioButtons("survey", buttons.text,
-                               alts , inline = TRUE, selected = "None")))
-    }
-  })
-  # set nr
-  observeEvent(input$ok,{
-    if (sn == 1) {
-      input$age <- renderText({ input$age })
-    } else {input$age <- renderText(NULL)}
-  })
-  observeEvent(input$OK, {
-    if (sn <= n.total) {
-      output$set.nr <- renderText(paste(c("Döntési szituáció", sn, "/", n.total)))
-    } else {output$set.nr <- renderText(NULL)}
-  })
-  # Introtext
-  output$intro <- renderText(intro.text)
-  observeEvent(input$OK, {
-    output$intro <- renderText(NULL)
-  })
-  # End of survey
-  observeEvent(input$OK, {
-    # Display end text 
-    if (input$OK > n.total) {
-      # Display end text 
-      output$end <- renderText(end.text)
-    }
-    # Quit application 
-    if (input$OK > (n.total + 1)) {
-      # Write data to file
-      if (!is.null(data.dir)) {
-        saveData(data = surveyData, data.dir = data.dir, n.atts = n.atts)
-      }
-      # Stop application 
-      #stopApp()
-    }
-  })
 }
+#When action button is clicked
+observeEvent(input$OK, {
+  # survey phase 
+  if (sn <= n.total ) {
+    # Plot new choice set
+    output$choice.set <-  renderTable(Select(), rownames = TRUE)
+  }
+  
+  # Store responses and design
+  if (sn > 1 && sn <= (n.total + 1)) {
+    resp  <<- c(resp, input$survey)
+    y.bin <<- Charbin(resp = resp, alts = alts, n.alts = n.alts)
+    sdata[["bin.responses"]] <- y.bin
+    sdata[["responses"]] <- resp
+    sdata[["desing"]] <- fulldes
+    sdata[["survey"]] <- choice.sets
+    surveyData <<- sdata 
+  } 
+  # end phase 
+  if (sn > n.total) {
+    #Don't show choice set
+    output$choice.set <-  renderTable(NULL)
+  }
+})
+# Count set number
+observeEvent(input$OK, {
+  #sn <<- sn + 1
+  #print(sn)
+})  # Count set number
+
+
+#Output response options after first action button click
+output$buttons <- renderUI({
+  # radiobuttons
+  if (input$OK > 0 && input$OK <= n.total) {
+    return(list(radioButtons("survey", buttons.text,
+                             alts , inline = TRUE, selected = "None")))
+  }
+})
+# set nr
+observeEvent(input$ok,{
+  if (sn == 1) {
+    input$age <- renderText({ input$age })
+  } else {input$age <- renderText(NULL)}
+})
+observeEvent(input$OK, {
+  if (sn <= n.total) {
+    output$set.nr <- renderText(paste(c("Döntési szituáció", sn, "/", n.total)))
+  } else {output$set.nr <- renderText(NULL)}
+})
+# Introtext
+output$intro <- renderText(intro.text)
+observeEvent(input$OK, {
+  output$intro <- renderText(NULL)
+})
+# End of survey
+observeEvent(input$OK, {
+  # Display end text 
+  if (input$OK > n.total) {
+    # Display end text 
+    output$end <- renderText(end.text)
+  }
+  # Quit application 
+  if (input$OK > (n.total + 1)) {
+    # Write data to file
+    if (!is.null(data.dir)) {
+      saveData(data = surveyData, data.dir = data.dir, n.atts = n.atts)
+    }
+    # Stop application 
+    #stopApp()
+  }
+})
+
+}
+
+
 
 
 
